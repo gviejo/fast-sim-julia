@@ -1,11 +1,6 @@
+tic()
 
-libSDLmm = dlopen("/usr/lib/libSDLmm-0.1.so.8.0.0")
-
-# ccall( dlsym(libsdlmm, :Init), Bool, (Uint32,), 0x00000020);
-
-import GetC.@getCFun
-@getCFun libSDLmm Init Init(flags::Uint32)::Bool
-
+libtest = dlopen("/home/guillaume/fast-sim-julia/libtest.so")
 
 # module SDL
 #     import GetC.@getCFun
@@ -101,54 +96,48 @@ import GetC.@getCFun
 # end
 
 
-# function sdl_init(flags::Uint32)
-#   tmp = ccall( (:SDL_Init, "libSDL"), Int32, (Uint32,), flags);
-# end
+function sdl_init(flags::Uint32)
+  ccall( dlsym(libtest, :init), Int32, (Uint32,), 0x00000020)
+end
 
-# function sdl_setvideomode(w, h)
-#   return ccall( (:SDL_SetVideoMode, "libSDL"), Ptr{sdl_surface}, (Int32, Int32, Int32, Uint32,), w, h, 32, 0x00000000);
-# end
+function sdl_setvideomode(w, h)
+  return ccall( dlsym(libtest, :setvideomode), Ptr{Void}, (Int32, Int32, Int32, Uint32,), w, h, 32, 0x00000000);
+end
 
-# function sdl_creatergbsurface(w, h)
-#   return ccall( (:SDL_CreateRGBSurface, "libSDL"), Ptr{sdl_surface}, (Uint32, Int32, Int32, Int32, Uint32, Uint32, Uint32, Uint32,),
-#                 0x00000000, w, h, 32, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
-# end
+function sdl_creatergbsurface(w, h)
+  return ccall( dlsym(libtest, :creatergbsurface), Ptr{Void}, (Int32, Int32,), w, h);
+end
 
-# function sdl_blitsurface(src, dst)
-#   return ccall( (:SDL_BlitSurface, "libSDL"), Int32, (Ptr{sdl_surface}, Ptr{sdl_rect}, Ptr{sdl_surface}, Ptr{sdl_rect}), &src, &C_NULL, &dst, &C_NULL);
-# end
+function putpixel(map::Ptr{Void}, x, y, r, g, b)
+  ccall( dlsym(libtest, :putpixel), Int32, (Ptr{Void}, Int32, Int32, Uint8, Uint8, Uint8), map, x, y, r, g, b);
+end
 
-# function blit_map(map, screen, w, h)
-#   for i = 0:w
-#     for j = 0:h
-#       color = sdl_mapRGB()
-#       put_pixel(map, i,j,color)
-#     end
-#   end
-#   # sdl_blitsurface(map, screen)
-#   # SDL_UpdateRect(screen, 0, 0, width, height)
-# end
+function update(src::Ptr{Void}, dst::Ptr{Void}, w, h)
+  ccall( dlsym(libtest, :update), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32), src, dst, w, h);
+end
 
-# function put_pixel(surface, x, y, color)
-#   tmp = unsafe
-#   bufp::Ptr{Uint32} = surface
-# end
-# width = 640
-# height = 480
+function blitmap(map, screen, w, h)
+  for i = 0:w
+    for j = 0:h
+      putpixel(map, i, j, 0, 0, 200)            
+    end
+  end  
+  update(map, screen, w, h)  
+end
 
 
 
-# sdl_init(0x00000020)
-# screen = sdl_setvideomode(width, height)
-# map = sdl_creatergbsurface(width, height)
 
-# put_pixel()
+width = 640
+height = 480
 
-# # sdl_blitsurface(map, screen)
 
-# # function put_pixel(x,y,r,g,b)
-# #   color = SDL_MapRGB(map.format)
+
+sdl_init(0x00000020)
+screen = sdl_setvideomode(width, height)
+map = sdl_creatergbsurface(width, height)
+
+blitmap(map, screen, width, height)
+
   
-
-# # end
-
+toc()
