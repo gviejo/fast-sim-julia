@@ -1,21 +1,68 @@
 #include <stdio.h>
-#include "SDL/SDL.h"
-#include "SDL/SDL_image.h"
+#include "SDL2/SDL.h"
+// #include "SDL2/SDL_image.h"
 #include "yourlib.h"
 
-int init(Uint32 flags)
-{
+int init(Uint32 flags) {
 	int res = SDL_Init(flags);
 	return res;
 };
+void print_SDL_version(char* preamble, SDL_version* v) {
+   printf("%s %u.%u.%u\n", preamble, v->major, v->minor, v->patch);
+}
+void version(void) {
+    SDL_version ver;
+    SDL_VERSION(&ver);
+    print_SDL_version("SDL compile-time version", &ver);
+}
+union SDL_Event* get_events() {
+	SDL_Event* event;
+	return event;
+}
 void quit(Uint32 flags) {
 	SDL_QuitSubSystem(flags);
-	SDL_Quit();	
+	SDL_Quit();
 };
-struct SDL_Surface* setvideomode(int w, int h, int bpp, Uint32 flags) {
-    SDL_Surface *tmp = SDL_SetVideoMode(w, h, bpp, flags);    
-	return tmp;
+struct SDL_Window* getwindow(int w, int h) {
+    SDL_Window* window = NULL;
+    window = SDL_CreateWindow( "fast-sim-julia", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
+    return window;
+}
+struct SDL_Surface* getsurface(struct SDL_Window* window) {
+    SDL_Surface* screen = SDL_GetWindowSurface( window );
+    return screen;
+}
+struct SDL_Renderer* getrenderer(struct SDL_Window* window) {
+    SDL_Renderer* rend = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
+    SDL_SetRenderDrawColor( rend, 0xFF, 0xFF, 0xFF, 0xFF );
+    return rend;
 };
+struct SDL_Texture* gettexture(SDL_Renderer* renderer, SDL_Surface* screen, char* image_path) {
+    SDL_Texture* tex = NULL;
+    SDL_Surface* image = SDL_LoadBMP(image_path);
+    // SDL_Surface* loadedSurface = IMG_Load(image_path);
+    // SDL_Surface* optimizedSurface = NULL;
+    // optimizedSurface = SDL_ConvertSurface( image, screen->format, 0);
+    tex = SDL_CreateTextureFromSurface( renderer, image);    
+    SDL_FreeSurface(image);
+    SDL_FreeSurface(screen);    
+
+    return tex;
+};
+void render(struct SDL_Renderer* renderer, struct SDL_Texture* texture) {
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy( renderer, texture, NULL, NULL );
+    SDL_RenderPresent( renderer );
+}
+
+struct SDL_Surface* getbackground(struct SDL_Surface* screen, char* image_path) {  
+    SDL_Surface *image = SDL_LoadBMP(image_path);
+    SDL_Surface* optimizedSurface = NULL;
+    optimizedSurface = SDL_ConvertSurface( image, screen->format, 0);
+    SDL_FreeSurface(image);    
+    return optimizedSurface;
+};
+
 struct SDL_Surface* creatergbsurface(int w, int h) {
 	SDL_Surface *surface;
 	Uint32 rmask, gmask, bmask, amask;
@@ -46,29 +93,74 @@ void setfullcolor(struct SDL_Surface* surface, Uint8 r, Uint8 g, Uint8 b) {
     }
     SDL_UnlockSurface(surface);
 };
-void update(struct SDL_Surface* src, struct SDL_Surface* dest, int w, int h) {
-	SDL_BlitSurface(src, NULL, dest, NULL);	
-	SDL_UpdateRect(dest, 0, 0, w, h);
+void update(struct SDL_Surface* src, struct SDL_Surface* dest, struct SDL_Window* window) {
+	SDL_BlitSurface(src, NULL, dest, NULL);	    
+	SDL_UpdateWindowSurface(window);
 };
-void background(struct SDL_Surface* surface, char* image_path) {	
-   SDL_Surface *image = IMG_Load (image_path);
-   if ( !image )
-   {
-      printf ( "IMG_Load: %s\n", IMG_GetError () );  
-   }   
-   SDL_BlitSurface(image, NULL, surface, 0);
-   SDL_UpdateRect(surface, 0, 0, surface->w, surface->h);
-   SDL_FreeSurface(image);   
-};
-void sdl_events() {	
-	printf("Hello");
-	SDL_Event event;
-    // if( SDL_PollEvent( &event ) ) 
-    // {
-    // 	if( event.type == SDL_QUIT )
-    // 		return 0;
-    // 	else
-    // 		return 1;
-    // }	
-	// return 1;
+
+
+void circle(struct SDL_Surface* surface, struct SDL_Surface* map, int n_cx, int n_cy, int radius, Uint8 r, Uint8 g, Uint8 b) {
+	SDL_LockSurface(map);
+	double error = (double)-radius;
+    double x = (double)radius -0.5;
+    double y = (double)0.5;
+    double cx = n_cx - 0.5;
+    double cy = n_cy - 0.5; 	
+    while (x >= y)
+    {
+        setpixel(map, (int)(cx + x), (int)(cy + y), r, g, b);
+        setpixel(map, (int)(cx + y), (int)(cy + x), r, g, b);
+ 
+        if (x != 0)
+        {
+            setpixel(map, (int)(cx - x), (int)(cy + y), r, g, b);
+            setpixel(map, (int)(cx + y), (int)(cy - x), r, g, b);
+        }
+ 
+        if (y != 0)
+        {
+            setpixel(map, (int)(cx + x), (int)(cy - y), r, g, b);
+            setpixel(map, (int)(cx - y), (int)(cy + x), r, g, b);
+        }
+ 
+        if (x != 0 && y != 0)
+        {
+            setpixel(map, (int)(cx - x), (int)(cy - y), r, g, b);
+            setpixel(map, (int)(cx - y), (int)(cy - x), r, g, b);
+        }
+ 
+        error += y;
+        ++y;
+        error += y;
+ 
+        if (error >= 0)
+        {
+            --x;
+            error -= x;
+            error -= x;
+        }
+    } 	
+ 	SDL_UnlockSurface(map);
+   	SDL_BlitSurface(map, NULL, surface, 0);
+   	SDL_UpdateRect(surface, 0, 0, surface->w, surface->h);
+   	
+}
+
+int sdl_events(union SDL_Event* event, struct SDL_Window* window) {     
+    // printf("1\n");
+    while ( SDL_PollEvent( event ) != 0 )
+    {
+        printf("2\n");        
+        // if ( event->type == SDL_QUIT ) {
+  //           // SDL_DestroyWindow(window);
+  //           // window = NULL;
+        //  // SDL_Quit();
+            // printf("Hello\n");
+            // return 0;
+        // }
+        // else
+        //  return 1;
+    }
+    printf("3\n");
+    return 1;
 };
