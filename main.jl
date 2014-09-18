@@ -14,30 +14,21 @@ module SDL
     end
     function gettexture(renderer::Ptr{Void}, path)
         return ccall( dlsym(libtest, :gettexture), Ptr{Void}, (Ptr{Void}, Ptr{Uint8}), renderer, path)
-    end
-    function getbackground(screen, path)
-        return ccall( dlsym(libtest, :getbackground), Ptr{Void}, (Ptr{Void}, Ptr{Uint8}), screen, path)
-    end 
+    end    
     function render(renderer, texture, x, y)
         ccall( dlsym(libtest, :render), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32), renderer, texture, x, y)
+    end
+    function renderagent(renderer, texture, x, y, angle)
+        ccall( dlsym(libtest, :renderagent), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32, Float64), renderer, texture, x, y, angle)
     end
     function sdl_getevents()
         return ccall( dlsym(libtest, :get_events), Ptr{Void}, ())
     end    
     function quit(window)
         ccall( dlsym(libtest, :quit), Void, (Ptr{Void},), window)
-    end
-    function sdl_setvideomode(w, h)
-        return ccall( dlsym(libtest, :setvideomode), Ptr{Void}, (Int32, Int32, Int32, Uint32,), w, h, 32, 0x00000000);
-    end
-    function sdl_creatergbsurface(w, h)
-        return ccall( dlsym(libtest, :creatergbsurface), Ptr{Void}, (Int32, Int32,), w, h);
-    end
+    end    
     function sdl_events(events::Ptr{Void})
         return ccall( dlsym(libtest, :sdl_events), Int32, (Ptr{Void},), events);
-    end
-    function circle(screen, map, x, y, r)
-        ccall( dlsym(libtest, :circle), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32, Int32, Uint8, Uint8, Uint8), screen, map, x, y, r, 255, 0, 0)
     end
     function setpixel(map::Ptr{Void}, x, y, r, g, b)
         ccall( dlsym(libtest, :setpixel), Int32, (Ptr{Void}, Int32, Int32, Uint8, Uint8, Uint8), map, x, y, r, g, b);
@@ -45,20 +36,8 @@ module SDL
     function update(src::Ptr{Void})
         ccall( dlsym(libtest, :update), Void, (Ptr{Void},), src);
     end
-    function setColor(src::Ptr{Void}, r, g, b)
-        ccall( dlsym(libtest, :setfullcolor), Void, (Ptr{Void}, Uint8, Uint8, Uint8), src, r, g, b)
-    end
-    function blitmap(map, screen, w, h)
-        for i = 40:w-1
-            for j = 30:50
-                setpixel(map, i, j, 200, 220, 0)            
-            end
-        end  
-        update(map, screen, w, h)
-    end    
-
-    export sdl_init, quit, getwindow, getrenderer, gettexture, getsurface, sdl_creatergbsurface, setpixel, update, setColor, blitmap, 
-            getbackground, sdl_events, sdl_getevents, circle, render
+    export sdl_init, quit, getwindow, getrenderer, gettexture, getsurface, setpixel, update,
+          sdl_events, sdl_getevents, render, renderagent
 end
 
 tic();
@@ -67,7 +46,6 @@ using SDL
 
 width = 1000
 height = 1000
-radius = 50
 
 sdl_init();
 window = getwindow()
@@ -76,15 +54,15 @@ background = gettexture(renderer, "starmaze.bmp")
 agent = gettexture(renderer, "agent.bmp")
 events = sdl_getevents();
 
+i = 0.0
 
-# while sdl_events(events) == 1 
-
-for i = 0.0:0.001:20*pi
-
+while sdl_events(events) == 1 
+# for i = 0.0:0.001:20*pi
+    i+=0.001
     x = int32(450+250*cos(i))
     y = int32(450+250*sin(i))
     render(renderer, background, 0, 0)
-    render(renderer, agent, x, y)
+    renderagent(renderer, agent, x, y, 360.0*cos(i))
     update(renderer)
 end
 # println("hello")
