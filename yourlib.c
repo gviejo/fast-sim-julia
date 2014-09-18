@@ -3,9 +3,9 @@
 // #include "SDL2/SDL_image.h"
 #include "yourlib.h"
 
-int init(Uint32 flags) {
-	int res = SDL_Init(flags);
-	return res;
+void init() {
+	SDL_Init(SDL_INIT_VIDEO);
+    SDL_SetHint( SDL_HINT_RENDER_SCALE_QUALITY, "1");	
 };
 void print_SDL_version(char* preamble, SDL_version* v) {
    printf("%s %u.%u.%u\n", preamble, v->major, v->minor, v->patch);
@@ -15,46 +15,56 @@ void version(void) {
     SDL_VERSION(&ver);
     print_SDL_version("SDL compile-time version", &ver);
 }
-union SDL_Event* get_events() {
+union SDL_Event* get_events(void) {
 	SDL_Event* event;
 	return event;
 }
-void quit(Uint32 flags) {
-	SDL_QuitSubSystem(flags);
+void quit(struct SDL_Window* window) {
+    SDL_DestroyWindow( window );
 	SDL_Quit();
 };
-struct SDL_Window* getwindow(int w, int h) {
-    SDL_Window* window = NULL;
-    window = SDL_CreateWindow( "fast-sim-julia", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_SHOWN);
+SDL_Window* getwindow(void) {
+    SDL_Window* window ;    
     return window;
 }
+SDL_Renderer* getrenderer(struct SDL_Window* window, int width, int height) {
+    // SDL_Window* window ;
+    window = SDL_CreateWindow( "fast-sim-julia", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+    SDL_Renderer* rend;
+    rend = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED);    
+    SDL_SetRenderDrawColor( rend, 0xFF, 0xFF, 0xFF, 0xFF );
+    return rend;
+};
 struct SDL_Surface* getsurface(struct SDL_Window* window) {
     SDL_Surface* screen = SDL_GetWindowSurface( window );
     return screen;
 }
-struct SDL_Renderer* getrenderer(struct SDL_Window* window) {
-    SDL_Renderer* rend = SDL_CreateRenderer( window, -1, SDL_RENDERER_ACCELERATED );
-    SDL_SetRenderDrawColor( rend, 0xFF, 0xFF, 0xFF, 0xFF );
-    return rend;
-};
-struct SDL_Texture* gettexture(SDL_Renderer* renderer, SDL_Surface* screen, char* image_path) {
-    SDL_Texture* tex = NULL;
-    SDL_Surface* image = SDL_LoadBMP(image_path);
-    // SDL_Surface* loadedSurface = IMG_Load(image_path);
-    // SDL_Surface* optimizedSurface = NULL;
-    // optimizedSurface = SDL_ConvertSurface( image, screen->format, 0);
-    tex = SDL_CreateTextureFromSurface( renderer, image);    
-    SDL_FreeSurface(image);
-    SDL_FreeSurface(screen);    
-
+struct SDL_Texture* gettexture(SDL_Renderer* renderer, char* image_path) {
+    SDL_Texture* tex;
+    SDL_Surface* background;    
+    background = SDL_LoadBMP(image_path);
+    tex = SDL_CreateTextureFromSurface( renderer, background);
+    SDL_FreeSurface(background);
     return tex;
 };
-void render(struct SDL_Renderer* renderer, struct SDL_Texture* texture) {
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy( renderer, texture, NULL, NULL );
-    SDL_RenderPresent( renderer );
+void render(SDL_Renderer* renderer, SDL_Texture* texture, int x, int y){    
+    SDL_Rect dst;
+    dst.x = x;
+    dst.y = y;    
+    SDL_QueryTexture(texture, NULL, NULL, &dst.w, &dst.h);
+    SDL_RenderCopy(renderer, texture, NULL, &dst);
 }
-
+// void render(struct SDL_Renderer* renderer, struct SDL_Texture* texture, int x, int y) {
+    
+//     SDL_Rect DestR;
+//     DestR.x = x;
+//     DestR.y = y;
+//     SDL_RenderCopy( renderer, texture, NULL, &DestR);
+//     SDL_RenderPresent( renderer );
+// }
+void update(struct SDL_Renderer* renderer) {    
+    SDL_RenderPresent( renderer );
+};
 struct SDL_Surface* getbackground(struct SDL_Surface* screen, char* image_path) {  
     SDL_Surface *image = SDL_LoadBMP(image_path);
     SDL_Surface* optimizedSurface = NULL;
@@ -92,10 +102,6 @@ void setfullcolor(struct SDL_Surface* surface, Uint8 r, Uint8 g, Uint8 b) {
     	pixels[i] = SDL_MapRGB(surface->format, r, g, b);    
     }
     SDL_UnlockSurface(surface);
-};
-void update(struct SDL_Surface* src, struct SDL_Surface* dest, struct SDL_Window* window) {
-	SDL_BlitSurface(src, NULL, dest, NULL);	    
-	SDL_UpdateWindowSurface(window);
 };
 
 
@@ -146,21 +152,14 @@ void circle(struct SDL_Surface* surface, struct SDL_Surface* map, int n_cx, int 
    	
 }
 
-int sdl_events(union SDL_Event* event, struct SDL_Window* window) {     
-    // printf("1\n");
+int sdl_events(union SDL_Event* event) {     
     while ( SDL_PollEvent( event ) != 0 )
-    {
-        printf("2\n");        
-        // if ( event->type == SDL_QUIT ) {
-  //           // SDL_DestroyWindow(window);
-  //           // window = NULL;
-        //  // SDL_Quit();
-            // printf("Hello\n");
-            // return 0;
-        // }
-        // else
-        //  return 1;
+    {        
+        if (event->type == SDL_WINDOWEVENT) {
+            if (event->window.event == SDL_WINDOWEVENT_CLOSE) {                
+                return 0;
+            }                
+        }
     }
-    printf("3\n");
     return 1;
 };
