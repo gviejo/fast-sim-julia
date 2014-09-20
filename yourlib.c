@@ -33,9 +33,10 @@ SDL_Renderer* getrenderer(struct SDL_Window* window, int width, int height) {
     SDL_SetRenderDrawColor( rend, 0xFF, 0xFF, 0xFF, 0xFF );
     return rend;
 };
-struct SDL_Surface* getsurface(struct SDL_Window* window) {
-    SDL_Surface* screen = SDL_GetWindowSurface( window );
-    return screen;
+struct SDL_Surface* getsurface(char* image_path) {
+    SDL_Surface* background;    
+    background = SDL_LoadBMP(image_path);    
+    return background;
 }
 struct SDL_Texture* gettexture(SDL_Renderer* renderer, char* image_path) {
     SDL_Texture* tex;
@@ -56,7 +57,7 @@ void render(SDL_Renderer* renderer, SDL_Texture* texture, int x, int y){
     SDL_Rect dst;
     dst.x = x;
     dst.y = y;    
-    SDL_QueryTexture(texture, NULL, NULL, &dst.w, &dst.h);
+    SDL_QueryTexture(texture, NULL, NULL, &dst.w, &dst.h);    
     SDL_RenderCopy(renderer, texture, NULL, &dst);
 }
 void update(struct SDL_Renderer* renderer) {    
@@ -86,3 +87,15 @@ int sdl_events(union SDL_Event* event) {
     }
     return 1;
 };
+int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y) {
+    // int nbOctetsParPixel = surface->format->BytesPerPixel;
+    // Uint32 *p = (Uint32 *)surface->pixels + y * surface->pitch + x * nbOctetsParPixel;
+    SDL_PixelFormat *fmt = surface->format;
+    SDL_Color *color;
+    color=&fmt->palette->colors[*((Uint32*)(surface->pixels) + x + y * surface->w)];
+    // printf("Pixel Color-> Red: %d, Green: %d, Blue: %d \n", color->r, color->g, color->b);
+    // Uint8 r, g, b;
+    // SDL_GetRGB(*((Uint32*)(surface->pixels) + x + y * surface->w), surface->format, &r, &g, &b);
+
+    return 0;
+}

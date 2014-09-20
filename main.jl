@@ -9,8 +9,8 @@ module SDL
     function getrenderer(window, width, height)
         return ccall( dlsym(libtest, :getrenderer), Ptr{Void}, (Ptr{Void}, Int32, Int32), window, width, height);
     end
-    function getsurface(window::Ptr{Void})
-        return ccall( dlsym(libtest, :getsurface), Ptr{Void}, (Ptr{Void},), window)
+    function getsurface(path)
+        return ccall( dlsym(libtest, :getsurface), Ptr{Void}, (Ptr{Uint8},), path)
     end
     function gettexture(renderer::Ptr{Void}, path)
         return ccall( dlsym(libtest, :gettexture), Ptr{Void}, (Ptr{Void}, Ptr{Uint8}), renderer, path)
@@ -19,8 +19,12 @@ module SDL
         ccall( dlsym(libtest, :render), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32), renderer, texture, x, y)
     end
     function renderagent(renderer, texture, x, y, angle)
-        ccall( dlsym(libtest, :renderagent), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32, Float64), renderer, texture, x, y, angle)
-    end
+        # if ccall( dlsym(libtest, :checkcollision), ) == 1:
+            ccall( dlsym(libtest, :renderagent), Void, (Ptr{Void}, Ptr{Void}, Int32, Int32, Float64), renderer, texture, x, y, angle)
+    end    
+    # function checkcollision(agent, background, x, y)
+    #     ccall( dlsym(libtest, :checkcollision), Int32, (agent, background, x, y), Ptr{Void}, Ptr{Void}, Int32, Int32)
+    # end
     function sdl_getevents()
         return ccall( dlsym(libtest, :get_events), Ptr{Void}, ())
     end    
@@ -37,7 +41,7 @@ module SDL
         ccall( dlsym(libtest, :update), Void, (Ptr{Void},), src);
     end
     export sdl_init, quit, getwindow, getrenderer, gettexture, getsurface, setpixel, update,
-          sdl_events, sdl_getevents, render, renderagent
+          sdl_events, sdl_getevents, render, renderagent, libtest
 end
 
 tic();
@@ -50,21 +54,23 @@ height = 1000
 sdl_init();
 window = getwindow()
 renderer = getrenderer(window, width, height);
-background = gettexture(renderer, "starmaze.bmp")
+background_surface = getsurface("starmaze.bmp")
+background_texture = gettexture(renderer, "starmaze.bmp")
 agent = gettexture(renderer, "agent.bmp")
 events = sdl_getevents();
 
-i = 0.0
+# i = 0.0
 
-while sdl_events(events) == 1 
-# for i = 0.0:0.001:20*pi
-    i+=0.001
+# while sdl_events(events) == 1 
+for i = 0.0:0.001:20*pi
     x = int32(450+250*cos(i))
     y = int32(450+250*sin(i))
-    render(renderer, background, 0, 0)
+    render(renderer, background_texture, 0, 0)
+    a = ccall( dlsym(libtest, :checkcollision), Int32, (Ptr{Void}, Ptr{Void}, Int32, Int32), agent, background_surface, x, y)
+    # println(a)
     renderagent(renderer, agent, x, y, 360.0*cos(i))
     update(renderer)
 end
-# println("hello")
+
 quit(window)
 toc();
