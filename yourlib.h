@@ -7,7 +7,7 @@ extern void print_SDL_version(char* preamble, SDL_version* v);
 extern void version(void);
 extern void quit(struct SDL_Window* window);
 extern SDL_Window* getwindow();
-extern struct SDL_Surface* getsurface(char* image_path);
+extern struct SDL_Surface* getsurface(SDL_Window* window, char* image_path);
 extern void setpixel(struct SDL_Surface* surface, int x, int y, Uint8 r, Uint8 g, Uint8 b);
 extern void update(struct SDL_Renderer* renderer);
 extern int sdl_events(union SDL_Event* event);
