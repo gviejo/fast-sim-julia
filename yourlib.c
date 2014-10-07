@@ -88,14 +88,15 @@ int sdl_events(union SDL_Event* event) {
     return 1;
 };
 int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y) {
-    // int nbOctetsParPixel = surface->format->BytesPerPixel;
-    // Uint32 *p = (Uint32 *)surface->pixels + y * surface->pitch + x * nbOctetsParPixel;
-    SDL_PixelFormat *fmt = surface->format;
-    SDL_Color *color;
-    color=&fmt->palette->colors[*((Uint32*)(surface->pixels) + x + y * surface->w)];
+    int nbOctetsParPixel = surface->format->BytesPerPixel;
+    Uint32 *p = (Uint32 *)surface->pixels + y * surface->pitch + x * nbOctetsParPixel;
+    // SDL_PixelFormat *fmt = surface->format;
+    // SDL_Color *color;
+    // color=&fmt->palette->colors[*((Uint32*)(surface->pixels) + x + y * surface->w)];
     // printf("Pixel Color-> Red: %d, Green: %d, Blue: %d \n", color->r, color->g, color->b);
-    // Uint8 r, g, b;
-    // SDL_GetRGB(*((Uint32*)(surface->pixels) + x + y * surface->w), surface->format, &r, &g, &b);
+    Uint8 r, g, b;
+    SDL_GetRGB(*((Uint32*)(surface->pixels) + x + y * surface->w), surface->format, &r, &g, &b);
+    printf("%d,%d,%d\n",r,g,b);
 
     return 0;
 }
