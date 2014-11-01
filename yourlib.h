@@ -16,4 +16,4 @@ extern struct SDL_Texture* gettexture(SDL_Renderer* renderer, char* image_path);
 extern SDL_Renderer* getrenderer(struct SDL_Window* window, int width, int height);
 extern void render(SDL_Renderer* renderer, SDL_Texture* texture, int x, int y);
 extern void renderagent(SDL_Renderer* renderer, SDL_Texture* texture, int x, int y, double angle);
-extern int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y);
+// extern int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y);

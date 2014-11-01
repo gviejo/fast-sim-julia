@@ -92,19 +92,19 @@ int sdl_events(union SDL_Event* event) {
     }
     return 1;
 };
-int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y) {
-    int nbOctetsParPixel = surface->format->BytesPerPixel;
-    SDL_LockSurface(surface);
-	Uint8 r, g, b;
-	SDL_GetRGB(*((Uint32*)(surface->pixels) + x + y * surface->w), surface->format, &r, &g, &b);	
-    SDL_UnlockSurface(surface);
-    if (r+b+g != 0)
-    	return 0;
-    // for (i = 0; i < surface->w*surface->h; i++)
-    // {    
-    // 	SDL_GetRGB(pixels[i], surface->format, &r, &g, &b);	
-    // 	printf("%u,%u,%u\n",r,g,b);
-    // }
+// int checkcollision(SDL_Texture* agent, SDL_Surface* surface, int x, int y) {
+//     int nbOctetsParPixel = surface->format->BytesPerPixel;
+//     SDL_LockSurface(surface);
+// 	Uint8 r, g, b;
+// 	SDL_GetRGB(*((Uint32*)(surface->pixels) + x + y * surface->w), surface->format, &r, &g, &b);	
+//     SDL_UnlockSurface(surface);
+//     if (r+b+g != 0)
+//     	return 0;
+//     // for (i = 0; i < surface->w*surface->h; i++)
+//     // {    
+//     // 	SDL_GetRGB(pixels[i], surface->format, &r, &g, &b);	
+//     // 	printf("%u,%u,%u\n",r,g,b);
+//     // }
 
-    return 1;
-}
+//     return 1;
+// }
