@@ -40,93 +40,101 @@ module SDL
           sdl_events, sdl_getevents, render, renderagent, libtest
 end
 
-function checkcollision(x,y)    
-    if int8(0) in img_background[y:y+height_agent,x:x+width_agent][contour_index]
-        return false
-    else
-        return true
+module Motion
+    using SDL
+    using constants
+    using Images: imread, float32sc
+        
+    # creating a list of index to check in img_background for collision
+    img_background = int8(float32sc(imread(world_name)).data');
+    img_agent = int8(float32sc(imread(agent_name)).data');
+    contour_index = find(i->i==0,img_agent)
+    # info about the world and the agent
+    height, width = size(img_background)
+    width_agent, height_agent = size(img_agent)        
+    # SDL initiation
+    sdl_init();
+    window = getwindow()
+    renderer = getrenderer(window, width, height);
+    background_surface = getsurface(world_name)
+    background_texture = gettexture(renderer, world_name)
+    agent = gettexture(renderer, agent_name)
+    events = sdl_getevents();    
+    
+    function quit()
+        quit(window)
     end
+
+    function checkcollision(x,y)    
+        if int8(0) in img_background[y:y+height_agent,x:x+width_agent][contour_index]
+            return false
+        else
+            return true
+        end
+    end
+
+    function move(x, y, vr, vl, length, theta)    
+        if abs(vr-vl) > 1e-6        
+            cste1 = (length*(vr+vl))/(2*(vr-vl))
+            cste2 = theta+((vr-vl)*dt)/length
+            return [x+cste1*(sin(cste2)-sin(theta)),y+cste1*(cos(cste2)-cos(theta)), cste2]
+        # elseif vr>0.0
+        #     return [x+dt*cos(theta)*vr, y-dt*sin(theta)*vl, theta]
+        else
+            return [x-dt*cos(theta)*vr, y+dt*sin(theta)*vl, theta]
+        end
+    end
+
+    function drive(pos, vr, vl)
+        new_pos = move(pos[1], pos[2], vr, vl, wheel_dist, pos[3])    
+        if checkcollision(int(new_pos[1]-width_agent/2), int(new_pos[2]-height_agent/2))
+            pos = new_pos
+            render(renderer, background_texture, 0, 0)
+            renderagent(renderer, background_surface, agent, int(pos[1]-width_agent/2), int(pos[2]-height_agent/2), -180.0*pos[3]/pi)
+            update(renderer)
+        end
+        return pos
+    end
+
+    export drive, quit, init
 end
 
-function move(x, y, vr, vl, length, theta)    
-    if vr-vl > 1e-6        
-        cste1 = (length*(vr+vl))/(2*(vr-vl))
-        cste2 = theta+((vr-vl)*dt)/length
-        return [x+cste1*(sin(cste2)-sin(theta)),y+cste1*(cos(cste2)-cos(theta)), cste2]
-    elseif vr>0.0
-        return [x+dt*cos(theta)*vr, y-dt*sin(theta)*vl, theta]
-    else
-        return [x-dt*cos(theta)*vr, y+dt*sin(theta)*vl, theta]
-    end
-end
-
-function drive(pos, vr, vl)
-    new_pos = move(pos[1], pos[2], vr, vl, wheel_dist, pos[3])    
-    if checkcollision(int(new_pos[1]-width_agent/2), int(new_pos[2]-height_agent/2))
-        pos = new_pos
-        render(renderer, background_texture, 0, 0)
-        renderagent(renderer, background_surface, agent, int(pos[1]-width_agent/2), int(pos[2]-height_agent/2), -180.0*pos[3]/pi)
-        update(renderer)
-    end
-end
 tic();
-using SDL
-using Images
+using Motion
 
 
-# creating a list of index to check in img_background for collision
-img_background = int8(float32sc(imread("plain.bmp")).data');
-img_agent = int8(float32sc(imread("agent.bmp")).data');
-contour_index = find(i->i==0,img_agent)
 
-height, width = size(img_background)
-width_agent, height_agent = size(img_agent)
-
-sdl_init();
-window = getwindow()
-renderer = getrenderer(window, width, height);
-background_surface = getsurface("plain.bmp")
-background_texture = gettexture(renderer, "plain.bmp")
-agent = gettexture(renderer, "agent.bmp")
-events = sdl_getevents();
-
-dt = 0.2
-pos = [500.0, 300, 0]
-vr = 0.9
+pos = [500.0, 300.0, 0]
+vr = 1.0
 vl = 1.0
-wheel_dist = 40
+
 
 
 while true
-    drive(vr, vl)
+    # println(pos')
+    # pos = drive(pos, vr, vl)
+    print(vr,vl)
+    print("\n")
+    if rand() > 0.50
+        for i=1:10
+            vr=0.99*vr+0.01
+            vl=0.99*vl-0.01
+            pos = drive(pos, vr, vl)
+        end
+    else
+        for i=1:10
+            vr=0.99*vr-0.01
+            vl=0.99*vl+0.01
+            pos = drive(pos, vr, vl)
+        end
+    end    
 end
-
-# directions = [0.0, 90.0, 180.0, 270.0]
-# direction = 0.0
-# pos = [500,230];
-# i = 1
-# while true    
-#     new_pos = copy(pos)
-#     if direction == 0.0
-#         new_pos[2]-=1
-#     elseif direction == 90.0        
-#         new_pos[1]+=1
-#     elseif direction == 180.0        
-#         new_pos[2]+=1
-#     elseif direction == 270.0
-#         new_pos[1]-=1
-#     end
-#     if !(int8(0) in img_background[new_pos[2]:new_pos[2]+height_agent,new_pos[1]:new_pos[1]+width_agent][contour_index])        
-#         pos = new_pos
-#         render(renderer, background_texture, 0, 0)
-#         renderagent(renderer, background_surface, agent, pos[1], pos[2], direction)    
-#         update(renderer)
-#     else         
-#         direction = directions[rand(1:4)]
-   
-#     end
-#     # sleep(0.5)
-# end
-
-quit(window)
+quit()
 toc();
+
+
+
+
+
+
+
