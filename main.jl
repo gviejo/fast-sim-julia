@@ -78,8 +78,8 @@ module Motion
             cste1 = (length*(vr+vl))/(2*(vr-vl))
             cste2 = theta+((vr-vl)*dt)/length
             return [x+cste1*(sin(cste2)-sin(theta)),y+cste1*(cos(cste2)-cos(theta)), cste2]
-        # elseif vr>0.0
-        #     return [x+dt*cos(theta)*vr, y-dt*sin(theta)*vl, theta]
+        elseif (vr>0.0) & (vl>0.0)
+            return [x+dt*cos(theta)*vr, y-dt*sin(theta)*vl, theta]
         else
             return [x-dt*cos(theta)*vr, y+dt*sin(theta)*vl, theta]
         end
@@ -102,32 +102,16 @@ end
 tic();
 using Motion
 
+sigmoide(x,l=1) = 1.0/(1.0+exp(-x*l))
 
+pos = [500.0, 200.0, 0]
 
-pos = [500.0, 300.0, 0]
-vr = 1.0
-vl = 1.0
-
-
+vr = 0.9
+vl = 1.1
 
 while true
     # println(pos')
-    # pos = drive(pos, vr, vl)
-    print(vr,vl)
-    print("\n")
-    if rand() > 0.50
-        for i=1:10
-            vr=0.99*vr+0.01
-            vl=0.99*vl-0.01
-            pos = drive(pos, vr, vl)
-        end
-    else
-        for i=1:10
-            vr=0.99*vr-0.01
-            vl=0.99*vl+0.01
-            pos = drive(pos, vr, vl)
-        end
-    end    
+    pos = drive(pos, vr, vl)
 end
 quit()
 toc();
